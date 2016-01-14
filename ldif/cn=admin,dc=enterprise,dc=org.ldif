@@ -1,0 +1,5 @@
+dn: cn=admin,dc=enterprise,dc=org
+objectClass: person
+cn: admin
+sn: admin
+description: "LDAP Admin"

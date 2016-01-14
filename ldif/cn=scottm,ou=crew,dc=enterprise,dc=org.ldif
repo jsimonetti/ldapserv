@@ -1,0 +1,6 @@
+dn: cn=scottm,ou=crew,dc=enterprise,dc=org
+cn: scottm
+sn: Scott
+gn: Montgomery
+mail: Montgomery.scott@enterprise.org
+objectClass: inetOrgPerson

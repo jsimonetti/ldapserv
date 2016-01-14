@@ -1,0 +1,6 @@
+dn: cn=suluh,ou=crew,dc=enterprise,dc=org
+cn: suluh
+sn: Sulu
+gn: Hikaru
+mail: hikaru.sulu@enterprise.org
+objectClass: inetOrgPerson

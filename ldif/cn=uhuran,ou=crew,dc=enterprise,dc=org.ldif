@@ -1,0 +1,6 @@
+dn: cn=uhuran,ou=crew,dc=enterprise,dc=org
+cn: uhuran
+sn: Uhura
+gn: Nyota
+mail: nyota.uhura@enterprise.org
+objectClass: inetOrgPerson

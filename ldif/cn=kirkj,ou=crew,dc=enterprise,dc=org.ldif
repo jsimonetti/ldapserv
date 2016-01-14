@@ -1,0 +1,7 @@
+dn: cn=kirkj,ou=crew,dc=enterprise,dc=org
+cn: kirkj
+sn: Kirk
+gn: James Tiberius
+mail: james.kirk@enterprise.org
+mail: captain@enterprise.org
+objectClass: inetOrgPerson

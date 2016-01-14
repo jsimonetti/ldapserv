@@ -1,0 +1,4 @@
+dn: dc=enterprise,dc=org
+objectClass: dcObject
+objectClass: organization
+o: acme

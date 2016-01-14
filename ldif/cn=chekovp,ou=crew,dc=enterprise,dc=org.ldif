@@ -1,0 +1,6 @@
+dn: cn=chekovp,ou=crew,dc=enterprise,dc=org
+cn: chekovp
+sn: Chekov
+gn: pavel
+mail: pavel.chekov@enterprise.org
+objectClass: inetOrgPerson

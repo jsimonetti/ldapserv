@@ -1,0 +1,6 @@
+dn: cn=mccoyl,ou=crew,dc=enterprise,dc=org
+cn: mccoyl
+sn: McCoy
+gn: Leonard
+mail: leonard.mccoy@enterprise.org
+objectClass: inetOrgPerson
