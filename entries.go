@@ -43,6 +43,9 @@ func formatEntry(ldif *ldif, attributes message.AttributeSelection) message.Sear
 	e := ldap.NewSearchResultEntry(ldif.dn)
 
 	for _, attr := range ldif.attr {
+		if attr.name == "userPassword" {
+			continue
+		}
 		if len(attributes) < 1 {
 			e.AddAttribute(message.AttributeDescription(attr.name), message.AttributeValue(attr.content))
 			continue

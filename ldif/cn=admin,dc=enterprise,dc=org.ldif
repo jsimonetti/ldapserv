@@ -3,3 +3,4 @@ objectClass: person
 cn: admin
 sn: admin
 description: "LDAP Admin"
+userPassword: mysecret

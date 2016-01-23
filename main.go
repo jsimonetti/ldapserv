@@ -55,7 +55,7 @@ func main() {
 	server.Handle(routes)
 
 	// listen on 3389 and serve
-	go server.ListenAndServe("127.0.0.1:3389")
+	go server.ListenAndServe("10.10.1.10:3389")
 
 	// When CTRL+C, SIGINT and SIGTERM signal occurs
 	// Then stop server gracefully
@@ -95,9 +95,25 @@ func handleBind(w ldap.ResponseWriter, m *ldap.Message) {
 	r := m.GetBindRequest()
 	res := ldap.NewBindResponse(ldap.LDAPResultSuccess)
 	if r.AuthenticationChoice() == "simple" {
-		if string(r.Name()) == "login" {
-			w.Write(res)
-			return
+		//search for userdn
+		for _, ldif := range ldifs {
+			if ldif.dn == string(r.Name()) {
+				//Check password
+				for _, attr := range ldif.attr {
+
+					fmt.Printf("checking attr %s...\n", attr.name)
+					if attr.name == "userPassword" {
+						if attr.content == string(r.AuthenticationSimple()) {
+							w.Write(res)
+							return
+						}
+						fmt.Printf("userPassword doesn't match Pass=%#v, userPassword=%#v\n", r.Authentication(), attr.content)
+						break
+					}
+				}
+				fmt.Printf("no userPassword found!\n")
+				break
+			}
 		}
 		log.Printf("Bind failed User=%s, Pass=%#v", string(r.Name()), r.Authentication())
 		res.SetResultCode(ldap.LDAPResultInvalidCredentials)
@@ -205,6 +221,7 @@ func handleSearchDSE(w ldap.ResponseWriter, m *ldap.Message) {
 	e.AddAttribute("objectClass", "top", "extensibleObject")
 	e.AddAttribute("supportedLDAPVersion", "3")
 	e.AddAttribute("namingContexts", "o=Pronoc, c=Net")
+	e.AddAttribute("supportedExtension", "1.3.6.1.4.1.1466.20037")
 	// e.AddAttribute("subschemaSubentry", "cn=schema")
 	// e.AddAttribute("namingContexts", "ou=system", "ou=schema", "dc=example,dc=com", "ou=config")
 	// e.AddAttribute("supportedFeatures", "1.3.6.1.4.1.4203.1.5.1")
