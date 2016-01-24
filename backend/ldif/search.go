@@ -9,7 +9,7 @@ import (
 )
 
 func (l *LdifBackend) Search(r message.SearchRequest) ([]message.SearchResultEntry, int) {
-	l.log.Debug("Search", log.Ctx{"basedn": r.BaseObject(), "filter": r.Filter(), "filterString": r.FilterString(), "attributes": r.Attributes(), "timeLimit": r.TimeLimit().Int()})
+	l.Log.Debug("Search", log.Ctx{"basedn": r.BaseObject(), "filter": r.Filter(), "filterString": r.FilterString(), "attributes": r.Attributes(), "timeLimit": r.TimeLimit().Int()})
 
 	var entries []message.SearchResultEntry
 

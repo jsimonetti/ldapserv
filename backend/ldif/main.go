@@ -24,15 +24,14 @@ type attr struct {
 
 type LdifBackend struct {
 	ldifs []ldif
-	path  string
-	log   log.Logger
+	Path  string
+	Log   log.Logger
 }
 
 func (l *LdifBackend) Run() error {
-	l.path = "./ldif"
-	files, _ := ioutil.ReadDir(l.path)
+	files, _ := ioutil.ReadDir(l.Path)
 	for _, f := range files {
-		if err := l.readLdif(fmt.Sprintf("%s/%s", l.path, f.Name())); err != nil {
+		if err := l.readLdif(fmt.Sprintf("%s/%s", l.Path, f.Name())); err != nil {
 			return err
 		}
 	}
