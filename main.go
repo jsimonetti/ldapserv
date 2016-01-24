@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	ldap "github.com/jsimonetti/ldapserver"
+	"github.com/jsimonetti/ldifserver/backend/ldif"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
@@ -16,7 +17,7 @@ func main() {
 
 	logger = log.New()
 
-	backend := &LdifBackend{
+	backend := &ldif.LdifBackend{
 		path: "./ldif",
 		log:  logger.New(log.Ctx{"backend": "ldif"}),
 	}
