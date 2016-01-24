@@ -2,12 +2,6 @@ package main
 
 import "github.com/jsimonetti/ldapserv/ldap"
 
-func handleDefaultBind(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
-	res := ldap.NewBindResponse(ldap.LDAPResultInvalidCredentials)
-	res.SetDiagnosticMessage("No backend found")
-	w.Write(res)
-}
-
 func handleBind(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	r := m.GetBindRequest()
 	res := ldap.NewBindResponse(ldap.LDAPResultInvalidCredentials)
@@ -23,10 +17,6 @@ func handleBind(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	w.Write(res)
 }
 
-func handleDefaultSearch(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
-	res := ldap.NewSearchResultDoneResponse(ldap.LDAPResultUnwillingToPerform)
-	w.Write(res)
-}
 func handleSearch(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	r := m.GetSearchRequest()
 	// Handle Stop Signal (server stop / client disconnected / Abandoned request....)

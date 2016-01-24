@@ -63,3 +63,14 @@ func handleStartTLS(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend
 	m.Client.SetConn(tlsConn)
 	logger.Debug("StartTLS OK")
 }
+
+func handleDefaultBind(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
+	res := ldap.NewBindResponse(ldap.LDAPResultInvalidCredentials)
+	res.SetDiagnosticMessage("No backend found")
+	w.Write(res)
+}
+
+func handleDefaultSearch(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
+	res := ldap.NewSearchResultDoneResponse(ldap.LDAPResultUnwillingToPerform)
+	w.Write(res)
+}

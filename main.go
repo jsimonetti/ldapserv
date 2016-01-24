@@ -31,37 +31,11 @@ func main() {
 	server := ldap.NewServer()
 
 	//Create routes bindings
-	routes := ldap.NewRouteMux()
-
-	// buildins
-	routes.Search(handleSearchDSE).
-		BaseDn("").
-		Scope(ldap.SearchRequestScopeBaseObject).
-		Filter("(objectclass=*)").
-		Label("Search - ROOT DSE")
-	routes.Search(handleSearchMyCompany).
-		BaseDn("o=Pronoc, c=Net").
-		Scope(ldap.SearchRequestScopeBaseObject).
-		Label("Search - Company Root")
-	routes.Extended(handleStartTLS).
-		RequestName(ldap.NoticeOfStartTLS).Label("StartTLS")
+	routes := newRouter()
 
 	// backend specific routes
 	routes.Bind(handleBind).BaseDn("dc=enterprise,dc=org").Label("Bind LDIF").Backend(ldifstore)
 	routes.Search(handleSearch).BaseDn("dc=enterprise,dc=org").Label("Search LDIF").Backend(ldifstore)
-
-	//default routes
-	routes.NotFound(handleNotFound)
-	routes.Abandon(handleAbandon)
-	routes.Compare(handleCompare)
-	routes.Add(handleAdd)
-	routes.Delete(handleDelete)
-	routes.Modify(handleModify)
-	routes.Extended(handleWhoAmI).
-		RequestName(ldap.NoticeOfWhoAmI).Label("Ext - WhoAmI")
-	routes.Extended(handleExtended).Label("Ext - Generic")
-	routes.Bind(handleDefaultBind).Label("Default Bind")
-	routes.Search(handleDefaultSearch).Label("Default Search")
 
 	//Attach routes to server
 	server.Handle(routes)
