@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
-	"github.com/vjeantet/goldap/message"
-	ldap "github.com/vjeantet/ldapserver"
+	ldap "github.com/jsimonetti/ldapserver"
+	"github.com/lor00x/goldap/message"
 )
 
 const (
