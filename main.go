@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/jsimonetti/ldapserv/backend/ldif"
 	ldap "github.com/jsimonetti/ldapserver"
-	"github.com/jsimonetti/ldifserv/backend/ldif"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
