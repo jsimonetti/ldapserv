@@ -1,6 +1,6 @@
 package main
 
-import ldap "github.com/jsimonetti/ldapserver"
+import "github.com/jsimonetti/ldapserv/ldap"
 
 func handleWhoAmI(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	res := ldap.NewExtendedResponse(ldap.LDAPResultSuccess)

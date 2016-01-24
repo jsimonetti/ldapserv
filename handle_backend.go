@@ -1,6 +1,6 @@
 package main
 
-import ldap "github.com/jsimonetti/ldapserver"
+import "github.com/jsimonetti/ldapserv/ldap"
 
 func handleDefaultBind(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	res := ldap.NewBindResponse(ldap.LDAPResultInvalidCredentials)

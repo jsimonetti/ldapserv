@@ -3,7 +3,7 @@ package ldif
 import (
 	"strings"
 
-	ldap "github.com/jsimonetti/ldapserver"
+	"github.com/jsimonetti/ldapserv/ldap"
 	"github.com/lor00x/goldap/message"
 	log "gopkg.in/inconshreveable/log15.v2"
 )

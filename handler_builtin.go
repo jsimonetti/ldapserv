@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
-	ldap "github.com/jsimonetti/ldapserver"
+	"github.com/jsimonetti/ldapserv/ldap"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 

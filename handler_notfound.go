@@ -1,6 +1,6 @@
 package main
 
-import ldap "github.com/jsimonetti/ldapserver"
+import "github.com/jsimonetti/ldapserv/ldap"
 
 func handleNotFound(w ldap.ResponseWriter, r *ldap.Message, backend ldap.Backend) {
 	switch r.ProtocolOpType() {
