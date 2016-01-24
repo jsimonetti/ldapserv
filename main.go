@@ -17,12 +17,12 @@ func main() {
 
 	logger = log.New()
 
-	backend := &ldif.LdifBackend{
+	ldifstore := &ldif.LdifBackend{
 		Path: "./ldif",
 		Log:  logger.New(log.Ctx{"backend": "ldif"}),
 	}
 
-	if err := backend.Run(); err != nil {
+	if err := ldifstore.Run(); err != nil {
 		logger.Error("error loading backend", log.Ctx{"error": err})
 		os.Exit(1)
 	}
@@ -46,9 +46,13 @@ func main() {
 	routes.Extended(handleStartTLS).
 		RequestName(ldap.NoticeOfStartTLS).Label("StartTLS")
 
+	// backend specific routes
+	routes.Bind(handleBind).BaseDn("dc=enterprise,dc=org").Label("Bind LDIF").Backend(ldifstore)
+	routes.Search(handleSearch).BaseDn("dc=enterprise,dc=org").Label("Search LDIF").Backend(ldifstore)
+
+	//default routes
 	routes.NotFound(handleNotFound)
 	routes.Abandon(handleAbandon)
-	routes.Bind(handleBind).Backend(backend)
 	routes.Compare(handleCompare)
 	routes.Add(handleAdd)
 	routes.Delete(handleDelete)
@@ -56,7 +60,8 @@ func main() {
 	routes.Extended(handleWhoAmI).
 		RequestName(ldap.NoticeOfWhoAmI).Label("Ext - WhoAmI")
 	routes.Extended(handleExtended).Label("Ext - Generic")
-	routes.Search(handleSearch).Label("Search - Generic").Backend(backend)
+	routes.Bind(handleDefaultBind).Label("Default Bind")
+	routes.Search(handleDefaultSearch).Label("Default Search")
 
 	//Attach routes to server
 	server.Handle(routes)
