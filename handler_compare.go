@@ -13,7 +13,7 @@ import (
 // subtype did not match.  Other result codes indicate either that the
 // result of the comparison was Undefined, or that
 // some error occurred.
-func handleCompare(w ldap.ResponseWriter, m *ldap.Message) {
+func handleCompare(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	r := m.GetCompareRequest()
 	logger.Debug("Comparing entry", log.Ctx{"entry": r.Entry(), "name": r.Ava().AttributeDesc(), "value": r.Ava().AssertionValue()})
 	//attributes values

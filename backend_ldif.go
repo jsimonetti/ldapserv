@@ -6,17 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
-)
 
-func readLdifs() error {
-	files, _ := ioutil.ReadDir("./ldif/")
-	for _, f := range files {
-		if err := readLdif(fmt.Sprintf("./ldif/%s", f.Name())); err != nil {
-			return err
-		}
-	}
-	return nil
-}
+	ldap "github.com/jsimonetti/ldapserver"
+	"github.com/lor00x/goldap/message"
+	log "gopkg.in/inconshreveable/log15.v2"
+)
 
 type ldif struct {
 	dn   string
@@ -28,9 +22,24 @@ type attr struct {
 	content string
 }
 
-var ldifs []ldif
+type LdifBackend struct {
+	ldifs []ldif
+	path  string
+	log   log.Logger
+}
 
-func readLdif(name string) error {
+func (l *LdifBackend) Run() error {
+	l.path = "./ldif"
+	files, _ := ioutil.ReadDir(l.path)
+	for _, f := range files {
+		if err := l.readLdif(fmt.Sprintf("%s/%s", l.path, f.Name())); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (l *LdifBackend) readLdif(name string) error {
 	file, err := os.Open(name)
 	if err != nil {
 		return err
@@ -49,7 +58,7 @@ func readLdif(name string) error {
 		}
 		if parts[0] == "dn" {
 			if dn != "" {
-				ldifs = append(ldifs, ldif{dn, attrs})
+				l.ldifs = append(l.ldifs, ldif{dn, attrs})
 			}
 			attrs = make([]attr, 0)
 			dn = strings.TrimSpace(parts[1])
@@ -57,10 +66,89 @@ func readLdif(name string) error {
 			attrs = append(attrs, attr{parts[0], strings.TrimSpace(parts[1])})
 		}
 	}
-	ldifs = append(ldifs, ldif{dn, attrs})
+	l.ldifs = append(l.ldifs, ldif{dn, attrs})
 
 	if err := scanner.Err(); err != nil {
 		return err
 	}
 	return nil
+}
+
+func (l *LdifBackend) Search(basedn message.LDAPDN, filter message.Filter, attributes message.AttributeSelection) ([]message.SearchResultEntry, int) {
+
+	var entries []message.SearchResultEntry
+
+	for _, ldif := range l.ldifs {
+		if ldif.dn == string(basedn) {
+			if m, result := matchesFilter(filter, ldif); m != true {
+				if result != ldap.LDAPResultSuccess {
+					return make([]message.SearchResultEntry, 0), result
+				}
+				continue
+			}
+			entry := l.formatEntry(&ldif, attributes)
+			entries = append(entries, entry)
+			continue
+		}
+		if strings.HasSuffix(ldif.dn, string(basedn)) {
+			if m, result := matchesFilter(filter, ldif); m != true {
+				if result != ldap.LDAPResultSuccess {
+					return make([]message.SearchResultEntry, 0), result
+				}
+				continue
+			}
+			entry := l.formatEntry(&ldif, attributes)
+			entries = append(entries, entry)
+			continue
+		}
+	}
+
+	return entries, ldap.LDAPResultSuccess
+}
+
+func (l *LdifBackend) formatEntry(ldif *ldif, attributes message.AttributeSelection) message.SearchResultEntry {
+	e := ldap.NewSearchResultEntry(ldif.dn)
+
+	for _, attr := range ldif.attr {
+		if attr.name == "userPassword" {
+			continue
+		}
+		if len(attributes) < 1 {
+			e.AddAttribute(message.AttributeDescription(attr.name), message.AttributeValue(attr.content))
+			continue
+		}
+		for _, wantattr := range attributes {
+			if attr.name == string(wantattr) {
+				e.AddAttribute(message.AttributeDescription(attr.name), message.AttributeValue(attr.content))
+			}
+		}
+	}
+	return e
+}
+
+func (l *LdifBackend) Bind(r message.BindRequest) int {
+	if r.AuthenticationChoice() == "simple" {
+		//search for userdn
+		for _, ldif := range l.ldifs {
+			if ldif.dn == string(r.Name()) {
+				//Check password
+				for _, attr := range ldif.attr {
+
+					if attr.name == "userPassword" {
+						if attr.content == string(r.AuthenticationSimple()) {
+							return ldap.LDAPResultSuccess
+						}
+						l.log.Debug("userPassword doesn't match", log.Ctx{"pass": r.Authentication(), "userPassword": attr.content})
+						break
+					}
+				}
+				l.log.Debug("no userPassword found!")
+				break
+			}
+		}
+		l.log.Info("Bind failed", log.Ctx{"user": r.Name(), "pass": r.Authentication()})
+		return ldap.LDAPResultInvalidCredentials
+	} else {
+		return ldap.LDAPResultUnwillingToPerform
+	}
 }

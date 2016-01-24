@@ -2,7 +2,7 @@ package main
 
 import ldap "github.com/jsimonetti/ldapserver"
 
-func handleNotFound(w ldap.ResponseWriter, r *ldap.Message) {
+func handleNotFound(w ldap.ResponseWriter, r *ldap.Message, backend ldap.Backend) {
 	switch r.ProtocolOpType() {
 	case ldap.ApplicationBindRequest:
 		res := ldap.NewBindResponse(ldap.LDAPResultSuccess)

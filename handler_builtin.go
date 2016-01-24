@@ -8,7 +8,7 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-func handleSearchDSE(w ldap.ResponseWriter, m *ldap.Message) {
+func handleSearchDSE(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	r := m.GetSearchRequest()
 
 	logger.Debug("Request", log.Ctx{"basedn": r.BaseObject(), "filter": r.Filter(), "filterString": r.FilterString(), "attributes": r.Attributes(), "timeLimit": r.TimeLimit().Int()})
@@ -33,7 +33,7 @@ func handleSearchDSE(w ldap.ResponseWriter, m *ldap.Message) {
 	w.Write(res)
 }
 
-func handleSearchMyCompany(w ldap.ResponseWriter, m *ldap.Message) {
+func handleSearchMyCompany(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	r := m.GetSearchRequest()
 	logger.Debug("handleSearchMyCompany", log.Ctx{"baseDn": r.BaseObject()})
 
@@ -45,7 +45,7 @@ func handleSearchMyCompany(w ldap.ResponseWriter, m *ldap.Message) {
 	w.Write(res)
 }
 
-func handleStartTLS(w ldap.ResponseWriter, m *ldap.Message) {
+func handleStartTLS(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	tlsconfig, _ := getTLSconfig()
 	tlsConn := tls.Server(m.Client.GetConn(), tlsconfig)
 	res := ldap.NewExtendedResponse(ldap.LDAPResultSuccess)

@@ -5,7 +5,7 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-func handleModify(w ldap.ResponseWriter, m *ldap.Message) {
+func handleModify(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	r := m.GetModifyRequest()
 	logger.Debug("Modify entry", log.Ctx{"entry": r.Object()})
 

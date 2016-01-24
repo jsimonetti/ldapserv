@@ -25,7 +25,7 @@ DBUG[01-24|22:05:14] attribute      type=dSCorePropagationData value=16010101000
 
 */
 
-func handleAdd(w ldap.ResponseWriter, m *ldap.Message) {
+func handleAdd(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	r := m.GetAddRequest()
 	logger.Debug("Adding entry", log.Ctx{"entry": r.Entry()})
 	//attributes values

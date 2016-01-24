@@ -15,12 +15,16 @@ var logger log.Logger
 func main() {
 
 	logger = log.New()
-	/*
-		 if err := readLdifs(); err != nil {
-			logger.Error("error reading ldifs", log.Ctx{"error": err})
-			os.Exit(1)
-		}
-	*/
+
+	backend := &LdifBackend{
+		path: "./ldif",
+		log:  logger.New(log.Ctx{"backend": "ldif"}),
+	}
+
+	if err := backend.Run(); err != nil {
+		logger.Error("error loading backend", log.Ctx{"error": err})
+		os.Exit(1)
+	}
 
 	//Create a new LDAP Server
 	server := ldap.NewServer()
@@ -43,7 +47,7 @@ func main() {
 
 	routes.NotFound(handleNotFound)
 	routes.Abandon(handleAbandon)
-	routes.Bind(handleBind)
+	routes.Bind(handleBind).Backend(backend)
 	routes.Compare(handleCompare)
 	routes.Add(handleAdd)
 	routes.Delete(handleDelete)
@@ -51,7 +55,7 @@ func main() {
 	routes.Extended(handleWhoAmI).
 		RequestName(ldap.NoticeOfWhoAmI).Label("Ext - WhoAmI")
 	routes.Extended(handleExtended).Label("Ext - Generic")
-	routes.Search(handleSearch).Label("Search - Generic")
+	routes.Search(handleSearch).Label("Search - Generic").Backend(backend)
 
 	//Attach routes to server
 	server.Handle(routes)
