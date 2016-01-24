@@ -39,6 +39,67 @@ func (l *LdifBackend) Run() error {
 	return nil
 }
 
+func (l *LdifBackend) Bind(r message.BindRequest) int {
+	l.log.Debug("Bind", log.Ctx{"authchoice": r.AuthenticationChoice(), "user": r.Name()})
+	if r.AuthenticationChoice() == "simple" {
+		//search for userdn
+		for _, ldif := range l.ldifs {
+			if ldif.dn == string(r.Name()) {
+				//Check password
+				for _, attr := range ldif.attr {
+
+					if attr.name == "userPassword" {
+						if attr.content == string(r.AuthenticationSimple()) {
+							return ldap.LDAPResultSuccess
+						}
+						l.log.Debug("userPassword doesn't match", log.Ctx{"pass": r.Authentication(), "userPassword": attr.content})
+						break
+					}
+				}
+				l.log.Debug("no userPassword found!")
+				break
+			}
+		}
+		l.log.Info("Bind failed", log.Ctx{"user": r.Name(), "pass": r.Authentication()})
+		return ldap.LDAPResultInvalidCredentials
+	} else {
+		return ldap.LDAPResultUnwillingToPerform
+	}
+}
+
+func (l *LdifBackend) Search(r message.SearchRequest) ([]message.SearchResultEntry, int) {
+	l.log.Debug("Search", log.Ctx{"basedn": r.BaseObject(), "filter": r.Filter(), "filterString": r.FilterString(), "attributes": r.Attributes(), "timeLimit": r.TimeLimit().Int()})
+
+	var entries []message.SearchResultEntry
+
+	for _, ldif := range l.ldifs {
+		if ldif.dn == string(r.BaseObject()) {
+			if m, result := matchesFilter(r.Filter(), ldif); m != true {
+				if result != ldap.LDAPResultSuccess {
+					return make([]message.SearchResultEntry, 0), result
+				}
+				continue
+			}
+			entry := l.formatEntry(&ldif, r.Attributes())
+			entries = append(entries, entry)
+			continue
+		}
+		if strings.HasSuffix(ldif.dn, string(r.BaseObject())) {
+			if m, result := matchesFilter(r.Filter(), ldif); m != true {
+				if result != ldap.LDAPResultSuccess {
+					return make([]message.SearchResultEntry, 0), result
+				}
+				continue
+			}
+			entry := l.formatEntry(&ldif, r.Attributes())
+			entries = append(entries, entry)
+			continue
+		}
+	}
+
+	return entries, ldap.LDAPResultSuccess
+}
+
 func (l *LdifBackend) readLdif(name string) error {
 	file, err := os.Open(name)
 	if err != nil {
@@ -74,38 +135,6 @@ func (l *LdifBackend) readLdif(name string) error {
 	return nil
 }
 
-func (l *LdifBackend) Search(basedn message.LDAPDN, filter message.Filter, attributes message.AttributeSelection) ([]message.SearchResultEntry, int) {
-
-	var entries []message.SearchResultEntry
-
-	for _, ldif := range l.ldifs {
-		if ldif.dn == string(basedn) {
-			if m, result := matchesFilter(filter, ldif); m != true {
-				if result != ldap.LDAPResultSuccess {
-					return make([]message.SearchResultEntry, 0), result
-				}
-				continue
-			}
-			entry := l.formatEntry(&ldif, attributes)
-			entries = append(entries, entry)
-			continue
-		}
-		if strings.HasSuffix(ldif.dn, string(basedn)) {
-			if m, result := matchesFilter(filter, ldif); m != true {
-				if result != ldap.LDAPResultSuccess {
-					return make([]message.SearchResultEntry, 0), result
-				}
-				continue
-			}
-			entry := l.formatEntry(&ldif, attributes)
-			entries = append(entries, entry)
-			continue
-		}
-	}
-
-	return entries, ldap.LDAPResultSuccess
-}
-
 func (l *LdifBackend) formatEntry(ldif *ldif, attributes message.AttributeSelection) message.SearchResultEntry {
 	e := ldap.NewSearchResultEntry(ldif.dn)
 
@@ -124,31 +153,4 @@ func (l *LdifBackend) formatEntry(ldif *ldif, attributes message.AttributeSelect
 		}
 	}
 	return e
-}
-
-func (l *LdifBackend) Bind(r message.BindRequest) int {
-	if r.AuthenticationChoice() == "simple" {
-		//search for userdn
-		for _, ldif := range l.ldifs {
-			if ldif.dn == string(r.Name()) {
-				//Check password
-				for _, attr := range ldif.attr {
-
-					if attr.name == "userPassword" {
-						if attr.content == string(r.AuthenticationSimple()) {
-							return ldap.LDAPResultSuccess
-						}
-						l.log.Debug("userPassword doesn't match", log.Ctx{"pass": r.Authentication(), "userPassword": attr.content})
-						break
-					}
-				}
-				l.log.Debug("no userPassword found!")
-				break
-			}
-		}
-		l.log.Info("Bind failed", log.Ctx{"user": r.Name(), "pass": r.Authentication()})
-		return ldap.LDAPResultInvalidCredentials
-	} else {
-		return ldap.LDAPResultUnwillingToPerform
-	}
 }
