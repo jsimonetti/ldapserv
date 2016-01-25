@@ -2,6 +2,7 @@ package ldap
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	ldap "github.com/lor00x/goldap/message"
 	log "gopkg.in/inconshreveable/log15.v2"
@@ -191,6 +192,32 @@ func (h *RouteMux) addRoute(r *route) {
 	//and finally append to the list of Routes
 	//create the Route
 	h.routes = append(h.routes, r)
+
+	// sorts routes based on following criteria:
+	// - longest basedn on top
+	// - authchoice, filter and scope are ignored for now
+	/*
+	   sBasedn     string
+	   uBasedn     bool
+	*/
+	swapped := true
+	j := 0
+
+	for swapped == true {
+		swapped = false
+		j++
+		for i := 0; i < len(h.routes)-j; i++ {
+			if h.routes[i+1].uBasedn == true {
+				if h.routes[i].uBasedn == false || utf8.RuneCountInString(h.routes[i].sBasedn) < utf8.RuneCountInString(h.routes[i+1].sBasedn) {
+					tmp := h.routes[i]
+					h.routes[i] = h.routes[i+1]
+					h.routes[i+1] = tmp
+					swapped = true
+				}
+			}
+		}
+	}
+
 }
 
 func (h *RouteMux) NotFound(handler HandlerFunc) *route {
