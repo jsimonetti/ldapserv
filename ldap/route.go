@@ -200,24 +200,28 @@ func (h *RouteMux) addRoute(r *route) {
 	   sBasedn     string
 	   uBasedn     bool
 	*/
-	swapped := true
-	j := 0
 
-	for swapped == true {
-		swapped = false
-		j++
-		for i := 0; i < len(h.routes)-j; i++ {
-			if h.routes[i+1].uBasedn == true {
-				if h.routes[i].uBasedn == false || utf8.RuneCountInString(h.routes[i].sBasedn) < utf8.RuneCountInString(h.routes[i+1].sBasedn) {
-					tmp := h.routes[i]
-					h.routes[i] = h.routes[i+1]
-					h.routes[i+1] = tmp
-					swapped = true
+	var i, j int
+
+	exchanges := true
+	passnum := len(h.routes) - 1
+	for passnum > 0 && exchanges {
+		exchanges = false
+		for i = 0; i < passnum; i++ {
+			if h.routes[i].uBasedn == true {
+				if h.routes[i+1].uBasedn == false || utf8.RuneCountInString(h.routes[i].sBasedn) > utf8.RuneCountInString(h.routes[i+1].sBasedn) {
+					h.routes[i], h.routes[i+1] = h.routes[i+1], h.routes[i]
+					exchanges = true
 				}
 			}
 		}
+		passnum = passnum - 1
 	}
 
+	//reverse it
+	for i, j = 0, len(h.routes)-1; i < j; i, j = i+1, j-1 {
+		h.routes[i], h.routes[j] = h.routes[j], h.routes[i]
+	}
 }
 
 func (h *RouteMux) NotFound(handler HandlerFunc) *route {

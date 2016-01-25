@@ -71,6 +71,6 @@ func handleDefaultBind(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Back
 }
 
 func handleDefaultSearch(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
-	res := ldap.NewSearchResultDoneResponse(ldap.LDAPResultUnwillingToPerform)
+	res := ldap.NewSearchResultDoneResponse(ldap.LDAPResultOperationsError)
 	w.Write(res)
 }
