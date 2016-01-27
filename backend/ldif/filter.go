@@ -1,6 +1,7 @@
 package ldif
 
 import (
+	"encoding/base64"
 	"strings"
 
 	"github.com/jsimonetti/ldapserv/ldap"
@@ -17,10 +18,15 @@ func matchesFilter(packet message.Filter, e ldif) (bool, int) {
 		value := string(f.AssertionValue())
 		for _, a := range e.attr {
 			if strings.ToLower(a.name) == strings.ToLower(attribute) {
-				if strings.ToLower(a.content) == strings.ToLower(value) {
+				if a.atype == ATTR_TYPE_TEXT && strings.ToLower(string(a.content)) == strings.ToLower(value) {
 					return true, ldap.LDAPResultSuccess
 				}
-
+				if a.atype == ATTR_TYPE_BINARY {
+					ct := base64.StdEncoding.EncodeToString(a.content)
+					if ct == value {
+						return true, ldap.LDAPResultSuccess
+					}
+				}
 			}
 		}
 	case message.FilterPresent:
@@ -63,19 +69,22 @@ func matchesFilter(packet message.Filter, e ldif) (bool, int) {
 	case message.FilterSubstrings:
 		attribute := string(f.Type_())
 		for _, a := range e.attr {
+			if a.atype != ATTR_TYPE_TEXT {
+				continue
+			}
 			if strings.ToLower(a.name) == strings.ToLower(attribute) {
 				for _, fs := range f.Substrings() {
 					switch fsv := fs.(type) {
 					case message.SubstringInitial:
-						if strings.HasPrefix(a.content, string(fsv)) {
+						if strings.HasPrefix(string(a.content), string(fsv)) {
 							return true, ldap.LDAPResultSuccess
 						}
 					case message.SubstringAny:
-						if strings.Contains(a.content, string(fsv)) {
+						if strings.Contains(string(a.content), string(fsv)) {
 							return true, ldap.LDAPResultSuccess
 						}
 					case message.SubstringFinal:
-						if strings.HasSuffix(a.content, string(fsv)) {
+						if strings.HasSuffix(string(a.content), string(fsv)) {
 							return true, ldap.LDAPResultSuccess
 						}
 					}

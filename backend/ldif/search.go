@@ -14,7 +14,7 @@ func (l *LdifBackend) Search(r message.SearchRequest) ([]message.SearchResultEnt
 	var entries []message.SearchResultEntry
 
 	for _, ldif := range l.ldifs {
-		if ldif.dn == string(r.BaseObject()) {
+		if strings.ToLower(ldif.dn) == strings.ToLower(string(r.BaseObject())) {
 			if m, result := matchesFilter(r.Filter(), ldif); m != true {
 				if result != ldap.LDAPResultSuccess {
 					return make([]message.SearchResultEntry, 0), result
@@ -25,7 +25,7 @@ func (l *LdifBackend) Search(r message.SearchRequest) ([]message.SearchResultEnt
 			entries = append(entries, entry)
 			continue
 		}
-		if strings.HasSuffix(ldif.dn, string(r.BaseObject())) {
+		if strings.HasSuffix(strings.ToLower(ldif.dn), strings.ToLower(string(r.BaseObject()))) {
 			if m, result := matchesFilter(r.Filter(), ldif); m != true {
 				if result != ldap.LDAPResultSuccess {
 					return make([]message.SearchResultEntry, 0), result

@@ -161,8 +161,8 @@ func (h *RouteMux) ServeLDAP(w ResponseWriter, r *Message) {
 		}
 
 		if route.label != "" {
-			log.Debug(" ROUTE MATCH", log.Ctx{"label": route.label})
-			// log.Debug(" ROUTE MATCH ; %s", runtime.FuncForPC(reflect.ValueOf(route.handler).Pointer()).Name())
+			log.Debug("ROUTE MATCH", log.Ctx{"label": route.label})
+			// log.Debug("ROUTE MATCH ; %s", runtime.FuncForPC(reflect.ValueOf(route.handler).Pointer()).Name())
 		}
 
 		route.handler(w, r, route.backend)

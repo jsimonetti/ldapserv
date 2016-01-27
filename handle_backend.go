@@ -36,3 +36,18 @@ func handleSearch(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) 
 	res := ldap.NewSearchResultDoneResponse(result)
 	w.Write(res)
 }
+
+func handleAdd(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
+	r := m.GetAddRequest()
+	// Handle Stop Signal (server stop / client disconnected / Abandoned request....)
+	select {
+	case <-m.Done:
+		logger.Debug("Leaving handleAdd...")
+		return
+	default:
+	}
+
+	//attributes values
+	res := ldap.NewAddResponse(backend.Add(r))
+	w.Write(res)
+}

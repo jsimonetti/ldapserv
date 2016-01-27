@@ -16,7 +16,7 @@ func (l *LdifBackend) Bind(r message.BindRequest) int {
 				for _, attr := range ldif.attr {
 
 					if attr.name == "userPassword" {
-						if attr.content == string(r.AuthenticationSimple()) {
+						if string(attr.content) == string(r.AuthenticationSimple()) {
 							return ldap.LDAPResultSuccess
 						}
 						l.Log.Debug("userPassword doesn't match", log.Ctx{"pass": r.Authentication(), "userPassword": attr.content})

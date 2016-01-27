@@ -6,4 +6,5 @@ import "github.com/lor00x/goldap/message"
 type Backend interface {
 	Search(r message.SearchRequest) ([]message.SearchResultEntry, int)
 	Bind(r message.BindRequest) int
+	Add(r message.AddRequest) int
 }

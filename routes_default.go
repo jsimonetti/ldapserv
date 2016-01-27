@@ -23,12 +23,13 @@ func newRouter() *ldap.RouteMux {
 	routes.NotFound(handleNotFound)
 	routes.Abandon(handleAbandon)
 	routes.Compare(handleCompare)
-	routes.Add(handleAdd)
 	routes.Delete(handleDelete)
 	routes.Modify(handleModify)
 	routes.Extended(handleWhoAmI).
 		RequestName(ldap.NoticeOfWhoAmI).Label("Ext - WhoAmI")
 	routes.Extended(handleExtended).Label("Ext - Generic")
+
+	routes.Add(handleDefaultAdd).Label("Default Add")
 	routes.Bind(handleDefaultBind).Label("Default Bind")
 	routes.Search(handleDefaultSearch).Label("Default Search")
 

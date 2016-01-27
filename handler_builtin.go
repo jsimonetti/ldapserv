@@ -65,7 +65,8 @@ func handleStartTLS(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend
 }
 
 func handleDefaultBind(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
-	res := ldap.NewBindResponse(ldap.LDAPResultInvalidCredentials)
+	//res := ldap.NewBindResponse(ldap.LDAPResultInvalidCredentials)
+	res := ldap.NewBindResponse(ldap.LDAPResultSuccess)
 	res.SetDiagnosticMessage("No backend found")
 	w.Write(res)
 }
@@ -73,4 +74,18 @@ func handleDefaultBind(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Back
 func handleDefaultSearch(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
 	res := ldap.NewSearchResultDoneResponse(ldap.LDAPResultOperationsError)
 	w.Write(res)
+}
+
+func handleDefaultAdd(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
+	res := ldap.NewAddResponse(ldap.LDAPResultOperationsError)
+	w.Write(res)
+}
+
+func handleAbandon(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
+	var req = m.GetAbandonRequest()
+	// retreive the request to abandon, and send a abort signal to it
+	if requestToAbandon, ok := m.Client.GetMessageByID(int(req)); ok {
+		requestToAbandon.Abandon()
+		logger.Debug("Abandon signal sent to request processor", log.Ctx{"messageID": int(req)})
+	}
 }

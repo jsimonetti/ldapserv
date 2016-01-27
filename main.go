@@ -36,6 +36,7 @@ func main() {
 	// backend specific routes
 	routes.Bind(handleBind).BaseDn("dc=enterprise,dc=org").Label("Bind LDIF").Backend(ldifstore)
 	routes.Search(handleSearch).BaseDn("dc=enterprise,dc=org").Label("Search LDIF").Backend(ldifstore)
+	routes.Add(handleAdd).BaseDn("dc=enterprise,dc=org").Label("Add LDIF").Backend(ldifstore)
 
 	//Attach routes to server
 	server.Handle(routes)
