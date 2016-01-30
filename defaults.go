@@ -11,11 +11,11 @@ import (
 func newRouter(fallback ldap.Backend, logger log.Logger) *ldap.RouteMux {
 
 	defaults := &DefaultsBackend{
-		Log: logger.New(log.Ctx{"backend": "defaults"}),
+		Log: logger.New(log.Ctx{"type": "backend", "backend": "defaults"}),
 	}
 
 	//Create routes bindings
-	routes := ldap.NewRouteMux()
+	routes := ldap.NewRouteMux(logger)
 
 	// buildins
 	routes.Search(defaults).

@@ -30,6 +30,7 @@ type HandlerFunc func(ResponseWriter, *Message)
 type RouteMux struct {
 	routes        []*route
 	notFoundRoute *route
+	Log           log.Logger
 }
 
 type route struct {
@@ -133,8 +134,10 @@ func (r *route) RequestName(name ldap.LDAPOID) *route {
 
 // NewRouteMux returns a new *RouteMux
 // RouteMux implements ldapserver.Handler
-func NewRouteMux() *RouteMux {
-	return &RouteMux{}
+func NewRouteMux(logger log.Logger) *RouteMux {
+	return &RouteMux{
+		Log: logger.New(log.Ctx{"type": "router"}),
+	}
 }
 
 // Handler interface used to serve a LDAP Request message
@@ -155,8 +158,7 @@ func (h *RouteMux) ServeLDAP(w ResponseWriter, r *Message) {
 		}
 
 		if route.label != "" {
-			log.Debug("ROUTE MATCH", log.Ctx{"label": route.label})
-			// log.Debug("ROUTE MATCH ; %s", runtime.FuncForPC(reflect.ValueOf(route.handler).Pointer()).Name())
+			h.Log.Debug("ROUTE MATCH", log.Ctx{"label": route.label})
 		}
 
 		route.handler(w, r)
@@ -173,8 +175,10 @@ func (h *RouteMux) ServeLDAP(w ResponseWriter, r *Message) {
 	}
 
 	if h.notFoundRoute != nil {
+		h.Log.Debug("no match, running notFoundRoute")
 		h.notFoundRoute.handler(w, r)
 	} else {
+		h.Log.Debug("no match, running default notFound")
 		res := NewResponse(LDAPResultUnwillingToPerform)
 		res.SetDiagnosticMessage("Operation not implemented by server")
 		w.Write(res)

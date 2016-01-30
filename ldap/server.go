@@ -28,10 +28,10 @@ type Server struct {
 }
 
 //NewServer return a LDAP Server
-func NewServer() *Server {
+func NewServer(logger log.Logger) *Server {
 	return &Server{
 		chDone: make(chan bool),
-		log:    log.New(),
+		log:    logger.New(log.Ctx{"type": "ldap"}),
 	}
 }
 

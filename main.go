@@ -1,9 +1,12 @@
 package main
 
 import (
+	"flag"
+	"math/rand"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/jsimonetti/ldapserv/backend/debug"
 	"github.com/jsimonetti/ldapserv/backend/ldif"
@@ -11,15 +14,46 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
+// Global variables
+var debugflag bool
+var verboseflag bool
+var quietflag bool
+var helpflag bool
+
 var logger log.Logger
 
+func init() {
+	rand.Seed(time.Now().UTC().UnixNano())
+
+	flag.BoolVar(&debugflag, "debug", false, "show debug logging")
+	flag.BoolVar(&verboseflag, "verbose", false, "show verbose logging")
+	flag.BoolVar(&quietflag, "quiet", false, "suppress logging")
+	flag.BoolVar(&helpflag, "help", false, "show usage")
+}
+
 func main() {
+	flag.Parse()
+	if helpflag {
+		flag.Usage()
+		return
+	}
 
 	logger = log.New()
 
+	handler := log.StdoutHandler
+	if quietflag {
+		logger.SetHandler(log.DiscardHandler())
+	} else if verboseflag {
+		logger.SetHandler(log.LvlFilterHandler(log.LvlInfo, handler))
+	} else if debugflag {
+		logger.SetHandler(log.LvlFilterHandler(log.LvlDebug, handler))
+	} else {
+		logger.SetHandler(log.LvlFilterHandler(log.LvlError, handler))
+	}
+
 	ldifstore := &ldif.LdifBackend{
 		Path: "./ldif",
-		Log:  logger.New(log.Ctx{"backend": "ldif"}),
+		Log:  logger.New(log.Ctx{"type": "backend", "backend": "ldif"}),
 	}
 
 	if err := ldifstore.Run(); err != nil {
@@ -28,10 +62,10 @@ func main() {
 	}
 
 	//Create a new LDAP Server
-	server := ldap.NewServer()
+	server := ldap.NewServer(logger)
 
 	fallback := &debug.DebugBackend{
-		Log: logger.New(log.Ctx{"backend": "debug"}),
+		Log: logger.New(log.Ctx{"type": "backend", "backend": "debug"}),
 	}
 
 	//Create routes bindings
