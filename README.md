@@ -1,3 +1,4 @@
 # ldapserv
 Very simple Ldap server with multiple backend stores.
-Currently only ldif backend is implemented
+
+Currently a partial ldif backend and a debug backend is implemented
