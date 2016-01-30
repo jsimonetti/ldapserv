@@ -8,7 +8,16 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-func (l *LdifBackend) Search(r message.SearchRequest) ([]message.SearchResultEntry, int) {
+func (l *LdifBackend) Search(w ldap.ResponseWriter, m *ldap.Message) {
+	r := m.GetSearchRequest()
+	// Handle Stop Signal (server stop / client disconnected / Abandoned request....)
+	select {
+	case <-m.Done:
+		l.Log.Debug("Leaving Search... stop signal")
+		return
+	default:
+	}
+
 	l.Log.Debug("Search", log.Ctx{"basedn": r.BaseObject(), "filter": r.Filter(), "filterString": r.FilterString(), "attributes": r.Attributes(), "timeLimit": r.TimeLimit().Int()})
 
 	var entries []message.SearchResultEntry
@@ -17,7 +26,10 @@ func (l *LdifBackend) Search(r message.SearchRequest) ([]message.SearchResultEnt
 		if strings.ToLower(ldif.dn) == strings.ToLower(string(r.BaseObject())) {
 			if m, result := matchesFilter(r.Filter(), ldif); m != true {
 				if result != ldap.LDAPResultSuccess {
-					return make([]message.SearchResultEntry, 0), result
+					res := ldap.NewSearchResultDoneResponse(result)
+					w.Write(res)
+					//return make([]message.SearchResultEntry, 0), result
+					return
 				}
 				continue
 			}
@@ -28,7 +40,10 @@ func (l *LdifBackend) Search(r message.SearchRequest) ([]message.SearchResultEnt
 		if strings.HasSuffix(strings.ToLower(ldif.dn), strings.ToLower(string(r.BaseObject()))) {
 			if m, result := matchesFilter(r.Filter(), ldif); m != true {
 				if result != ldap.LDAPResultSuccess {
-					return make([]message.SearchResultEntry, 0), result
+					res := ldap.NewSearchResultDoneResponse(result)
+					w.Write(res)
+					//return make([]message.SearchResultEntry, 0), result
+					return
 				}
 				continue
 			}
@@ -38,5 +53,10 @@ func (l *LdifBackend) Search(r message.SearchRequest) ([]message.SearchResultEnt
 		}
 	}
 
-	return entries, ldap.LDAPResultSuccess
+	for i := 0; i < len(entries); i++ {
+		w.Write(entries[i])
+	}
+
+	res := ldap.NewSearchResultDoneResponse(ldap.LDAPResultSuccess)
+	w.Write(res)
 }

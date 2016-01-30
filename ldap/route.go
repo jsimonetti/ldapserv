@@ -24,7 +24,7 @@ const (
 // ordinary functions as LDAP handlers.  If f is a function
 // with the appropriate signature, HandlerFunc(f) is a
 // Handler object that calls f.
-type HandlerFunc func(ResponseWriter, *Message, Backend)
+type HandlerFunc func(ResponseWriter, *Message)
 
 // RouteMux manages all routes
 type RouteMux struct {
@@ -45,7 +45,6 @@ type route struct {
 	uScope      bool
 	sAuthChoice string
 	uAuthChoice bool
-	backend     Backend
 }
 
 // Match return true when the *Message matches the route
@@ -100,11 +99,6 @@ func (r *route) Match(m *Message) bool {
 
 func (r *route) Label(label string) *route {
 	r.label = label
-	return r
-}
-
-func (r *route) Backend(backend Backend) *route {
-	r.backend = backend
 	return r
 }
 
@@ -165,7 +159,7 @@ func (h *RouteMux) ServeLDAP(w ResponseWriter, r *Message) {
 			// log.Debug("ROUTE MATCH ; %s", runtime.FuncForPC(reflect.ValueOf(route.handler).Pointer()).Name())
 		}
 
-		route.handler(w, r, route.backend)
+		route.handler(w, r)
 		return
 	}
 
@@ -179,7 +173,7 @@ func (h *RouteMux) ServeLDAP(w ResponseWriter, r *Message) {
 	}
 
 	if h.notFoundRoute != nil {
-		h.notFoundRoute.handler(w, r, nil)
+		h.notFoundRoute.handler(w, r)
 	} else {
 		res := NewResponse(LDAPResultUnwillingToPerform)
 		res.SetDiagnosticMessage("Operation not implemented by server")
@@ -224,73 +218,73 @@ func (h *RouteMux) addRoute(r *route) {
 	}
 }
 
-func (h *RouteMux) NotFound(handler HandlerFunc) *route {
+func (h *RouteMux) NotFound(backend Backend) *route {
 	route := &route{}
-	route.handler = handler
+	route.handler = backend.NotFound
 	h.notFoundRoute = route
 	return route
 }
 
-func (h *RouteMux) Bind(handler HandlerFunc) *route {
+func (h *RouteMux) Bind(backend Backend) *route {
 	route := &route{}
 	route.operation = BIND
-	route.handler = handler
+	route.handler = backend.Bind
 	h.addRoute(route)
 	return route
 }
 
-func (h *RouteMux) Search(handler HandlerFunc) *route {
+func (h *RouteMux) Search(backend Backend) *route {
 	route := &route{}
 	route.operation = SEARCH
-	route.handler = handler
+	route.handler = backend.Search
 	h.addRoute(route)
 	return route
 }
 
-func (h *RouteMux) Add(handler HandlerFunc) *route {
+func (h *RouteMux) Add(backend Backend) *route {
 	route := &route{}
 	route.operation = ADD
-	route.handler = handler
+	route.handler = backend.Add
 	h.addRoute(route)
 	return route
 }
 
-func (h *RouteMux) Delete(handler HandlerFunc) *route {
+func (h *RouteMux) Delete(backend Backend) *route {
 	route := &route{}
 	route.operation = DELETE
-	route.handler = handler
+	route.handler = backend.Delete
 	h.addRoute(route)
 	return route
 }
 
-func (h *RouteMux) Modify(handler HandlerFunc) *route {
+func (h *RouteMux) Modify(backend Backend) *route {
 	route := &route{}
 	route.operation = MODIFY
-	route.handler = handler
+	route.handler = backend.Modify
 	h.addRoute(route)
 	return route
 }
 
-func (h *RouteMux) Compare(handler HandlerFunc) *route {
+func (h *RouteMux) Compare(backend Backend) *route {
 	route := &route{}
 	route.operation = COMPARE
-	route.handler = handler
+	route.handler = backend.Compare
 	h.addRoute(route)
 	return route
 }
 
-func (h *RouteMux) Extended(handler HandlerFunc) *route {
+func (h *RouteMux) Extended(backend Backend) *route {
 	route := &route{}
 	route.operation = EXTENDED
-	route.handler = handler
+	route.handler = backend.Extended
 	h.addRoute(route)
 	return route
 }
 
-func (h *RouteMux) Abandon(handler HandlerFunc) *route {
+func (h *RouteMux) Abandon(backend Backend) *route {
 	route := &route{}
 	route.operation = ABANDON
-	route.handler = handler
+	route.handler = backend.Abandon
 	h.addRoute(route)
 	return route
 }

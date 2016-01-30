@@ -2,36 +2,38 @@ package main
 
 import "github.com/jsimonetti/ldapserv/ldap"
 
-func newRouter() *ldap.RouteMux {
+func newRouter(fallback ldap.Backend) *ldap.RouteMux {
+
+	starttls := &StartTLSBackend{}
 	//Create routes bindings
 	routes := ldap.NewRouteMux()
 
 	// buildins
-	routes.Search(handleSearchDSE).
+	routes.Search(fallback).
 		BaseDn("").
 		Scope(ldap.SearchRequestScopeBaseObject).
 		Filter("(objectclass=*)").
 		Label("Search - ROOT DSE")
-	routes.Search(handleSearchMyCompany).
+	routes.Search(fallback).
 		BaseDn("o=Pronoc, c=Net").
 		Scope(ldap.SearchRequestScopeBaseObject).
 		Label("Search - Company Root")
-	routes.Extended(handleStartTLS).
+	routes.Extended(starttls).
 		RequestName(ldap.NoticeOfStartTLS).Label("StartTLS")
 
 	//default routes
-	routes.NotFound(handleNotFound)
-	routes.Abandon(handleAbandon)
-	routes.Compare(handleCompare)
-	routes.Delete(handleDelete)
-	routes.Modify(handleModify)
-	routes.Extended(handleWhoAmI).
+	routes.NotFound(fallback)
+	routes.Abandon(fallback)
+	routes.Compare(fallback)
+	routes.Delete(fallback)
+	routes.Modify(fallback)
+	routes.Extended(fallback).
 		RequestName(ldap.NoticeOfWhoAmI).Label("Ext - WhoAmI")
-	routes.Extended(handleExtended).Label("Ext - Generic")
+	routes.Extended(fallback).Label("Ext - Generic")
 
-	routes.Add(handleDefaultAdd).Label("Default Add")
-	routes.Bind(handleDefaultBind).Label("Default Bind")
-	routes.Search(handleDefaultSearch).Label("Default Search")
+	routes.Add(fallback).Label("Default Add")
+	routes.Bind(fallback).Label("Default Bind")
+	routes.Search(fallback).Label("Default Search")
 
 	return routes
 }

@@ -1,13 +1,13 @@
-package main
+package ldif
 
 import (
 	"github.com/jsimonetti/ldapserv/ldap"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-func handleModify(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) {
+func (l *LdifBackend) Modify(w ldap.ResponseWriter, m *ldap.Message) {
 	r := m.GetModifyRequest()
-	logger.Debug("Modify entry", log.Ctx{"entry": r.Object()})
+	l.Log.Debug("Modify entry", log.Ctx{"entry": r.Object()})
 
 	for _, change := range r.Changes() {
 		modification := change.Modification()
@@ -21,9 +21,9 @@ func handleModify(w ldap.ResponseWriter, m *ldap.Message, backend ldap.Backend) 
 			operationString = "Replace"
 		}
 
-		logger.Debug("attribute change", log.Ctx{"operation": operationString, "type": modification.Type_()})
+		l.Log.Debug("attribute change", log.Ctx{"operation": operationString, "type": modification.Type_()})
 		for _, attributeValue := range modification.Vals() {
-			logger.Debug("value", log.Ctx{"value": attributeValue})
+			l.Log.Debug("value", log.Ctx{"value": attributeValue})
 		}
 
 	}

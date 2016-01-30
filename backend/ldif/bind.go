@@ -2,11 +2,13 @@ package ldif
 
 import (
 	"github.com/jsimonetti/ldapserv/ldap"
-	"github.com/lor00x/goldap/message"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-func (l *LdifBackend) Bind(r message.BindRequest) int {
+func (l *LdifBackend) Bind(w ldap.ResponseWriter, m *ldap.Message) {
+	r := m.GetBindRequest()
+	res := ldap.NewBindResponse(ldap.LDAPResultInvalidCredentials)
+
 	l.Log.Debug("Bind", log.Ctx{"authchoice": r.AuthenticationChoice(), "user": r.Name()})
 	if r.AuthenticationChoice() == "simple" {
 		//search for userdn
@@ -17,7 +19,9 @@ func (l *LdifBackend) Bind(r message.BindRequest) int {
 
 					if attr.name == "userPassword" {
 						if string(attr.content) == string(r.AuthenticationSimple()) {
-							return ldap.LDAPResultSuccess
+							res.SetResultCode(ldap.LDAPResultSuccess)
+							w.Write(res)
+							return
 						}
 						l.Log.Debug("userPassword doesn't match", log.Ctx{"pass": r.Authentication(), "userPassword": attr.content})
 						break
@@ -28,8 +32,11 @@ func (l *LdifBackend) Bind(r message.BindRequest) int {
 			}
 		}
 		l.Log.Info("Bind failed", log.Ctx{"user": r.Name(), "pass": r.Authentication()})
-		return ldap.LDAPResultInvalidCredentials
+		res.SetResultCode(ldap.LDAPResultInvalidCredentials)
+		res.SetDiagnosticMessage("invalid credentials")
 	} else {
-		return ldap.LDAPResultUnwillingToPerform
+		res.SetResultCode(ldap.LDAPResultUnwillingToPerform)
+		res.SetDiagnosticMessage("Authentication choice not supported")
 	}
+	w.Write(res)
 }

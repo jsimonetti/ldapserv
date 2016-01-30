@@ -7,11 +7,19 @@ import (
 	"strconv"
 
 	"github.com/jsimonetti/ldapserv/ldap"
-	"github.com/lor00x/goldap/message"
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
-func (l *LdifBackend) Add(r message.AddRequest) int {
+func (l *LdifBackend) Add(w ldap.ResponseWriter, m *ldap.Message) {
+	r := m.GetAddRequest()
+	// Handle Stop Signal (server stop / client disconnected / Abandoned request....)
+	select {
+	case <-m.Done:
+		l.Log.Debug("Leaving Add... stop signal")
+		return
+	default:
+	}
+
 	l.Log.Debug("Adding entry", log.Ctx{"entry": r.Entry()})
 
 	entry := ldif{dn: string(r.Entry())}
@@ -30,11 +38,14 @@ func (l *LdifBackend) Add(r message.AddRequest) int {
 	}
 	if ok, err := l.saveEntry(entry); ok {
 		l.ldifs = append(l.ldifs, entry)
-		return ldap.LDAPResultSuccess
+		res := ldap.NewAddResponse(ldap.LDAPResultSuccess)
+		w.Write(res)
+		return
 	} else {
 		l.Log.Debug("Add entry error", log.Ctx{"error": err})
 	}
-	return ldap.LDAPResultOperationsError
+	res := ldap.NewAddResponse(ldap.LDAPResultOperationsError)
+	w.Write(res)
 }
 
 func (l *LdifBackend) saveEntry(entry ldif) (bool, error) {

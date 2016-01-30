@@ -1,8 +1,8 @@
-package main
+package ldif
 
 import "github.com/jsimonetti/ldapserv/ldap"
 
-func handleNotFound(w ldap.ResponseWriter, r *ldap.Message, backend ldap.Backend) {
+func (l *LdifBackend) NotFound(w ldap.ResponseWriter, r *ldap.Message) {
 	switch r.ProtocolOpType() {
 	case ldap.ApplicationBindRequest:
 		res := ldap.NewBindResponse(ldap.LDAPResultSuccess)
