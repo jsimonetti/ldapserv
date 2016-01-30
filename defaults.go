@@ -8,33 +8,70 @@ import (
 	log "gopkg.in/inconshreveable/log15.v2"
 )
 
+func newRouter(fallback ldap.Backend, logger log.Logger) *ldap.RouteMux {
+
+	defaults := &DefaultsBackend{
+		Log: logger.New(log.Ctx{"backend": "defaults"}),
+	}
+
+	//Create routes bindings
+	routes := ldap.NewRouteMux()
+
+	// buildins
+	routes.Search(defaults).
+		BaseDn("").
+		Scope(ldap.SearchRequestScopeBaseObject).
+		Filter("(objectclass=*)").
+		Label("Search - ROOT DSE")
+	routes.Search(defaults).
+		BaseDn("o=Pronoc, c=Net").
+		Scope(ldap.SearchRequestScopeBaseObject).
+		Label("Search - Company Root")
+	routes.Extended(defaults).
+		RequestName(ldap.NoticeOfStartTLS).Label("StartTLS")
+
+	//default routes
+	routes.NotFound(fallback)
+	routes.Abandon(fallback)
+	routes.Compare(fallback)
+	routes.Delete(fallback)
+	routes.Modify(fallback)
+	routes.Extended(fallback).
+		RequestName(ldap.NoticeOfWhoAmI).Label("Ext - WhoAmI")
+	routes.Extended(fallback).Label("Ext - Generic")
+
+	routes.Add(fallback).Label("Default Add")
+	routes.Bind(fallback).Label("Default Bind")
+	routes.Search(fallback).Label("Default Search")
+
+	return routes
+}
+
 type DefaultsBackend struct {
 	Log log.Logger
 }
 
-func (s *DefaultsBackend) ExtendedRequest(w ldap.ResponseWriter, m *ldap.Message) {
-	tlsconfig, _ := s.getTLSconfig()
-	tlsConn := tls.Server(m.Client.GetConn(), tlsconfig)
-	res := ldap.NewExtendedResponse(ldap.LDAPResultSuccess)
-	res.SetResponseName(ldap.NoticeOfStartTLS)
-	w.Write(res)
-
-	if err := tlsConn.Handshake(); err != nil {
-		s.Log.Error("StartTLS Handshake error", log.Ctx{"error": err})
-		res.SetDiagnosticMessage(fmt.Sprintf("StartTLS Handshake error : \"%s\"", err.Error()))
-		res.SetResultCode(ldap.LDAPResultOperationsError)
-		w.Write(res)
-		return
+func (d *DefaultsBackend) Extended(w ldap.ResponseWriter, m *ldap.Message) {
+	r := m.GetExtendedRequest()
+	if r.RequestName() == ldap.NoticeOfStartTLS {
+		d.startTLS(w, m)
 	}
-
-	m.Client.SetConn(tlsConn)
-	s.Log.Debug("StartTLS OK")
 }
 
-func (s *DefaultsBackend) handleSearchDSE(w ldap.ResponseWriter, m *ldap.Message) {
+func (d *DefaultsBackend) Search(w ldap.ResponseWriter, m *ldap.Message) {
+	r := m.GetSearchRequest()
+	if r.BaseObject() == "" && r.Scope() == ldap.SearchRequestScopeBaseObject && r.FilterString() == "(objectclass=*)" {
+		d.searchDSE(w, m)
+		return
+	}
+	if r.BaseObject() == "o=Pronoc, c=Net" && r.Scope() == ldap.SearchRequestScopeBaseObject {
+		d.searchMyCompany(w, m)
+	}
+}
+func (d *DefaultsBackend) searchDSE(w ldap.ResponseWriter, m *ldap.Message) {
 	r := m.GetSearchRequest()
 
-	logger.Debug("Request", log.Ctx{"basedn": r.BaseObject(), "filter": r.Filter(), "filterString": r.FilterString(), "attributes": r.Attributes(), "timeLimit": r.TimeLimit().Int()})
+	d.Log.Debug("SearchDSE", log.Ctx{"basedn": r.BaseObject(), "filter": r.Filter(), "filterString": r.FilterString(), "attributes": r.Attributes(), "timeLimit": r.TimeLimit().Int()})
 
 	e := ldap.NewSearchResultEntry("")
 	e.AddAttribute("vendorName", "Jeroen Simonetti")
@@ -56,9 +93,9 @@ func (s *DefaultsBackend) handleSearchDSE(w ldap.ResponseWriter, m *ldap.Message
 	w.Write(res)
 }
 
-func (s *DefaultsBackend) handleSearchMyCompany(w ldap.ResponseWriter, m *ldap.Message) {
+func (d *DefaultsBackend) searchMyCompany(w ldap.ResponseWriter, m *ldap.Message) {
 	r := m.GetSearchRequest()
-	logger.Debug("handleSearchMyCompany", log.Ctx{"baseDn": r.BaseObject()})
+	d.Log.Debug("SearchMyCompany", log.Ctx{"basedn": r.BaseObject(), "filter": r.Filter(), "filterString": r.FilterString(), "attributes": r.Attributes(), "timeLimit": r.TimeLimit().Int()})
 
 	e := ldap.NewSearchResultEntry(string(r.BaseObject()))
 	e.AddAttribute("objectClass", "top", "organizationalUnit")
@@ -68,15 +105,15 @@ func (s *DefaultsBackend) handleSearchMyCompany(w ldap.ResponseWriter, m *ldap.M
 	w.Write(res)
 }
 
-func (s *DefaultsBackend) handleStartTLS(w ldap.ResponseWriter, m *ldap.Message) {
-	tlsconfig, _ := getTLSconfig()
+func (d *DefaultsBackend) startTLS(w ldap.ResponseWriter, m *ldap.Message) {
+	tlsconfig, _ := d.getTLSconfig()
 	tlsConn := tls.Server(m.Client.GetConn(), tlsconfig)
 	res := ldap.NewExtendedResponse(ldap.LDAPResultSuccess)
 	res.SetResponseName(ldap.NoticeOfStartTLS)
 	w.Write(res)
 
 	if err := tlsConn.Handshake(); err != nil {
-		logger.Error("StartTLS Handshake error", log.Ctx{"error": err})
+		d.Log.Error("StartTLS Handshake error", log.Ctx{"error": err})
 		res.SetDiagnosticMessage(fmt.Sprintf("StartTLS Handshake error : \"%s\"", err.Error()))
 		res.SetResultCode(ldap.LDAPResultOperationsError)
 		w.Write(res)
@@ -84,12 +121,12 @@ func (s *DefaultsBackend) handleStartTLS(w ldap.ResponseWriter, m *ldap.Message)
 	}
 
 	m.Client.SetConn(tlsConn)
-	logger.Debug("StartTLS OK")
+	d.Log.Debug("StartTLS OK")
 }
 
 // getTLSconfig returns a tls configuration used
 // to build a TLSlistener for TLS or StartTLS
-func (s *DefaultsBackend) getTLSconfig() (*tls.Config, error) {
+func (d *DefaultsBackend) getTLSconfig() (*tls.Config, error) {
 	cert, err := tls.X509KeyPair(localhostCert, localhostKey)
 	if err != nil {
 		return &tls.Config{}, err
@@ -129,14 +166,13 @@ AM65XAOw8Dsg9Kq78aYXiOEDc5DL0sbFUu/SlmRcCg93
 -----END RSA PRIVATE KEY-----
 `)
 
-func (s *DefaultsBackend) Add(w ldap.ResponseWriter, m *ldap.Message)            {}
-func (s *DefaultsBackend) Bind(w ldap.ResponseWriter, m *ldap.Message)           {}
-func (s *DefaultsBackend) Delete(w ldap.ResponseWriter, m *ldap.Message)         {}
-func (s *DefaultsBackend) Modify(w ldap.ResponseWriter, m *ldap.Message)         {}
-func (s *DefaultsBackend) ModifyDN(w ldap.ResponseWriter, m *ldap.Message)       {}
-func (s *DefaultsBackend) PasswordModify(w ldap.ResponseWriter, m *ldap.Message) {}
-func (s *DefaultsBackend) Search(w ldap.ResponseWriter, m *ldap.Message)         {}
-func (s *DefaultsBackend) Whoami(w ldap.ResponseWriter, m *ldap.Message)         {}
-func (s *DefaultsBackend) Abandon(w ldap.ResponseWriter, m *ldap.Message)        {}
-func (s *DefaultsBackend) Compare(w ldap.ResponseWriter, m *ldap.Message)        {}
-func (s *DefaultsBackend) NotFound(w ldap.ResponseWriter, m *ldap.Message)       {}
+func (d *DefaultsBackend) Add(w ldap.ResponseWriter, m *ldap.Message)            {}
+func (d *DefaultsBackend) Bind(w ldap.ResponseWriter, m *ldap.Message)           {}
+func (d *DefaultsBackend) Delete(w ldap.ResponseWriter, m *ldap.Message)         {}
+func (d *DefaultsBackend) Modify(w ldap.ResponseWriter, m *ldap.Message)         {}
+func (d *DefaultsBackend) ModifyDN(w ldap.ResponseWriter, m *ldap.Message)       {}
+func (d *DefaultsBackend) PasswordModify(w ldap.ResponseWriter, m *ldap.Message) {}
+func (d *DefaultsBackend) Whoami(w ldap.ResponseWriter, m *ldap.Message)         {}
+func (d *DefaultsBackend) Abandon(w ldap.ResponseWriter, m *ldap.Message)        {}
+func (d *DefaultsBackend) Compare(w ldap.ResponseWriter, m *ldap.Message)        {}
+func (d *DefaultsBackend) NotFound(w ldap.ResponseWriter, m *ldap.Message)       {}

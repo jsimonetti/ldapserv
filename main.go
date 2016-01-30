@@ -35,7 +35,7 @@ func main() {
 	}
 
 	//Create routes bindings
-	routes := newRouter(fallback)
+	routes := newRouter(fallback, logger)
 
 	// backend specific routes
 	routes.Bind(ldifstore).BaseDn("dc=enterprise,dc=org").Label("Bind LDIF")
