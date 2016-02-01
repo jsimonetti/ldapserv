@@ -56,7 +56,7 @@ func main() {
 		Log:  logger.New(log.Ctx{"type": "backend", "backend": "ldif"}),
 	}
 
-	if err := ldifstore.Run(); err != nil {
+	if err := ldifstore.Start(); err != nil {
 		logger.Error("error loading backend", log.Ctx{"error": err})
 		os.Exit(1)
 	}

@@ -35,7 +35,7 @@ type LdifBackend struct {
 	Log   log.Logger
 }
 
-func (l *LdifBackend) Run() error {
+func (l *LdifBackend) Start() error {
 	files, _ := ioutil.ReadDir(l.Path)
 	for _, f := range files {
 		if err := l.readLdif(fmt.Sprintf("%s/%s", l.Path, f.Name())); err != nil {

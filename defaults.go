@@ -51,6 +51,10 @@ type DefaultsBackend struct {
 	Log log.Logger
 }
 
+func (d *DefaultsBackend) Start() error {
+	return nil
+}
+
 func (d *DefaultsBackend) Extended(w ldap.ResponseWriter, m *ldap.Message) {
 	r := m.GetExtendedRequest()
 	if r.RequestName() == ldap.NoticeOfStartTLS {

@@ -12,6 +12,10 @@ type DebugBackend struct {
 	Log log.Logger
 }
 
+func (d *DebugBackend) Start() error {
+	return nil
+}
+
 func (d *DebugBackend) Add(w ldap.ResponseWriter, m *ldap.Message) {
 	r := m.GetAddRequest()
 	spew.Dump(r)

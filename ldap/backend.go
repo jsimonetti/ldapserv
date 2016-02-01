@@ -2,6 +2,7 @@ package ldap
 
 // Backend is implemented by an LDAP database to provide the backing store
 type Backend interface {
+	Start() error
 	NotFound(ResponseWriter, *Message)
 	Bind(ResponseWriter, *Message)
 	Search(ResponseWriter, *Message)
