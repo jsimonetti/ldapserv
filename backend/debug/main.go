@@ -33,7 +33,7 @@ func (d *DebugBackend) Delete(w ldap.ResponseWriter, m *ldap.Message) {
 	w.Write(res)
 }
 
-func (d *DebugBackend) ExtendedRequest(w ldap.ResponseWriter, m *ldap.Message) {
+func (d *DebugBackend) Extended(w ldap.ResponseWriter, m *ldap.Message) {
 	r := m.GetExtendedRequest()
 	spew.Dump(r)
 	res := ldap.NewExtendedResponse(ldap.LDAPResultSuccess)
@@ -47,33 +47,10 @@ func (d *DebugBackend) Modify(w ldap.ResponseWriter, m *ldap.Message) {
 	w.Write(res)
 }
 
-func (d *DebugBackend) ModifyDN(w ldap.ResponseWriter, m *ldap.Message) {
-	r := m.GetModifyRequest()
-	fmt.Printf("MODIFYDN %#v\n", m)
-	spew.Dump(r)
-	res := ldap.NewModifyResponse(ldap.LDAPResultSuccess)
-	w.Write(res)
-}
-
-func (d *DebugBackend) PasswordModify(w ldap.ResponseWriter, m *ldap.Message) {
-	r := m.GetModifyRequest()
-	fmt.Printf("PASSWORD MODIFY %#v\n", m)
-	spew.Dump(r)
-	res := ldap.NewExtendedResponse(ldap.LDAPResultSuccess)
-	w.Write(res)
-}
-
 func (d *DebugBackend) Search(w ldap.ResponseWriter, m *ldap.Message) {
 	r := m.GetSearchRequest()
 	spew.Dump(r)
 	res := ldap.NewSearchResultDoneResponse(ldap.LDAPResultSuccess)
-	w.Write(res)
-}
-
-func (d *DebugBackend) Whoami(w ldap.ResponseWriter, m *ldap.Message) {
-	r := m.GetExtendedRequest()
-	spew.Dump(r)
-	res := ldap.NewExtendedResponse(ldap.LDAPResultSuccess)
 	w.Write(res)
 }
 
@@ -91,13 +68,6 @@ func (d *DebugBackend) Compare(w ldap.ResponseWriter, m *ldap.Message) {
 	fmt.Println("COMPARE %#v\n", m)
 	spew.Dump(m)
 	res := ldap.NewCompareResponse(ldap.LDAPResultCompareTrue)
-	w.Write(res)
-}
-
-func (d *DebugBackend) Extended(w ldap.ResponseWriter, m *ldap.Message) {
-	r := m.GetExtendedRequest()
-	spew.Dump(r)
-	res := ldap.NewExtendedResponse(ldap.LDAPResultSuccess)
 	w.Write(res)
 }
 
