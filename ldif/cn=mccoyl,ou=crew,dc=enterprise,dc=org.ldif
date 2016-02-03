@@ -4,3 +4,5 @@ sn: McCoy
 gn: Leonard
 mail: leonard.mccoy@enterprise.org
 objectClass: inetOrgPerson
+userPrincipalName: mccoyl@enterprise.org
+sAMAccountName: mccoyl

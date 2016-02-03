@@ -4,3 +4,5 @@ sn: Scott
 gn: Montgomery
 mail: Montgomery.scott@enterprise.org
 objectClass: inetOrgPerson
+userPrincipalName: scottm@enterprise.org
+sAMAccountName: scottm

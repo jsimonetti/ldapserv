@@ -3,3 +3,5 @@ cn: spock
 sn: Spock
 mail: spock@enterprise.org
 objectClass: inetOrgPerson
+userPrincipalName: spock@enterprise.org
+sAMAccountName: spock

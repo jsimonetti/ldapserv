@@ -4,3 +4,5 @@ cn: admin
 sn: admin
 description: "LDAP Admin"
 userPassword: mysecret
+userPrincipalName: admin@enterprise.org
+sAMAccountName: admin

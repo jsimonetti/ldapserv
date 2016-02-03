@@ -4,3 +4,5 @@ sn: Chekov
 gn: pavel
 mail: pavel.chekov@enterprise.org
 objectClass: inetOrgPerson
+userPrincipalName: chekovp@enterprise.org
+sAMAccountName: chekovp

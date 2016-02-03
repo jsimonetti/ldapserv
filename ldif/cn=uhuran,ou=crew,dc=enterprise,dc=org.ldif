@@ -4,3 +4,5 @@ sn: Uhura
 gn: Nyota
 mail: nyota.uhura@enterprise.org
 objectClass: inetOrgPerson
+userPrincipalName: uhuran@enterprise.org
+sAMAccountName: uhuran

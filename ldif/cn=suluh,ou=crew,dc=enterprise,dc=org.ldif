@@ -4,3 +4,5 @@ sn: Sulu
 gn: Hikaru
 mail: hikaru.sulu@enterprise.org
 objectClass: inetOrgPerson
+userPrincipalName: suluh@enterprise.org
+sAMAccountName: suluh

@@ -5,3 +5,5 @@ gn: James Tiberius
 mail: james.kirk@enterprise.org
 mail: captain@enterprise.org
 objectClass: inetOrgPerson
+userPrincipalName: kirkj@enterprise.org
+sAMAccountName: kirkj
