@@ -80,7 +80,7 @@ func main() {
 	server.Handle(routes)
 
 	// listen on 3389 and serve
-	go server.ListenAndServe(":3389")
+	go server.ListenAndServe(":6389")
 
 	// When CTRL+C, SIGINT and SIGTERM signal occurs
 	// Then stop server gracefully
