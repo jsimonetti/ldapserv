@@ -9,6 +9,7 @@ type Backend interface {
 	Add(ResponseWriter, *Message)
 	Delete(ResponseWriter, *Message)
 	Modify(ResponseWriter, *Message)
+	ModifyDN(ResponseWriter, *Message)
 	Extended(ResponseWriter, *Message)
 	Compare(ResponseWriter, *Message)
 	Abandon(ResponseWriter, *Message)

@@ -42,6 +42,10 @@ func (m *Message) GetDeleteRequest() ldap.DelRequest {
 	return m.ProtocolOp().(ldap.DelRequest)
 }
 
+func (m *Message) GetModifyDNRequest() ldap.ModifyDNRequest {
+	return m.ProtocolOp().(ldap.ModifyDNRequest)
+}
+
 func (m *Message) GetModifyRequest() ldap.ModifyRequest {
 	return m.ProtocolOp().(ldap.ModifyRequest)
 }

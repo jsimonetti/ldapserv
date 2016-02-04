@@ -178,6 +178,8 @@ func (d *DefaultsBackend) Delete(w ldap.ResponseWriter, m *ldap.Message) {}
 
 func (d *DefaultsBackend) Modify(w ldap.ResponseWriter, m *ldap.Message) {}
 
+func (d *DefaultsBackend) ModifyDN(w ldap.ResponseWriter, m *ldap.Message) {}
+
 func (d *DefaultsBackend) Abandon(w ldap.ResponseWriter, m *ldap.Message) {}
 
 func (d *DefaultsBackend) Compare(w ldap.ResponseWriter, m *ldap.Message) {}
